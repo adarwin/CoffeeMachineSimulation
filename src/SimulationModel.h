@@ -6,6 +6,8 @@
 
 #ifndef SIMULATION_MODEL_H
 #define SIMULATION_MODEL_H
+#include <set>
+#include <string>
 
 namespace com_adarwin_simulation {
     class SimulationState;
@@ -13,8 +15,11 @@ namespace com_adarwin_simulation {
 
     class SimulationModel {
         public:
-            virtual void lambda(SimulationState);
-            virtual void delta(SimulationInput);
+            SimulationModel(std::set<std::string>);
+            virtual void lambda(SimulationState*) = 0;
+            virtual void delta(SimulationState*, SimulationInput*) = 0;
+        protected:
+            std::set<std::string> acceptableInputs;
     };
 }
 #endif

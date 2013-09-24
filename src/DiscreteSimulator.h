@@ -12,10 +12,9 @@ namespace com_adarwin_simulation {
     class SimulationModel;
     class DiscreteSimulator {
         public:
-            DiscreteSimulator(SimulationModel);
-        protected:
+            DiscreteSimulator(SimulationModel*);
         private:
-            //SimulationModel simulationModel;
+            SimulationModel* simulationModel;
     };
 }
 #endif
