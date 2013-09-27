@@ -22,10 +22,14 @@ namespace com_adarwin_simulation {
             if (*it != ' ' && *it != ',') {
                 currentString += *it;
             }
+            inputList.push_back(currentString);
+            currentString = "";
+            /*
             if (*it == ',' || it == inputString.end()-1) {
                 inputList.push_back(currentString);
                 currentString = "";
             }
+            */
         }
     }
 

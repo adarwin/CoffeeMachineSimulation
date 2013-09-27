@@ -13,6 +13,7 @@ namespace com_adarwin_simulation {
     class CVMInput : public SimulationInput {
         public:
             CVMInput(std::string);
+            std::string getString();
     };
 }
 #endif

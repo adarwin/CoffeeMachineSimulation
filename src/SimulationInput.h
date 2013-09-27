@@ -14,7 +14,7 @@ namespace com_adarwin_simulation {
         public:
             SimulationInput(std::string);
             std::vector<std::string> getInputList();
-        private:
+        protected:
             std::vector<std::string> inputList;
     };
 }

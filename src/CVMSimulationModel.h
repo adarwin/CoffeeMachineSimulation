@@ -10,6 +10,7 @@
 #include <set>
 
 namespace com_adarwin_simulation {
+    class CVMState;
     class CVMSimulationModel : public SimulationModel {
         public:
             CVMSimulationModel(std::set<std::string>);
@@ -17,6 +18,12 @@ namespace com_adarwin_simulation {
             void delta(SimulationState*, SimulationInput*);
         protected:
             std::set<std::string> acceptableInputs;
+        private:
+            int numberOfCoffeesToDispense(CVMState*);
+            bool shouldProvideChange(CVMState*);
+            int centsToDispense(CVMState*);
+            void changeStateForDispensedCoffee(CVMState*);
+            void changeStateForDispensedChange(CVMState*);
     };
 }
 #endif

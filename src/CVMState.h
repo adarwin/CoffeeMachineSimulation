@@ -12,21 +12,30 @@ namespace com_adarwin_simulation {
     class CVMState : public SimulationState {
         public:
             CVMState();
-            CVMState(int, int, int, bool);
+            CVMState(int, int, int);
             //void setVariable(std::string name, StateVariable<int>);
-            int getNumNickels();
-            int getNumDimes();
-            int getNumQuarters();
+            int getCurrentNickels();
+            int getCurrentDimes();
+            int getCurrentQuarters();
             bool isChangeSelected();
             bool isWaiting();
-            void incrementNickels();
-            void incrementDimes();
-            void incrementQuarters();
+            void incrementCurrentNickels();
+            void incrementCurrentDimes();
+            void incrementCurrentQuarters();
             void setChangeSelected(bool);
             void setWaiting(bool);
             int getTotalCents();
+            int getCurrentCents();
+            bool moveCentsToTotalStorage(int);
+            bool removeCents(int);
+            std::string getString();
         private:
-            int numNickels, numDimes, numQuarters;
+            bool moveCurrentCents(int, bool);
+            std::string getStringLine(std::string, int, int);
+            std::string getRightPadding(std::string, int);
+            int numDigits(int);
+            int totalNickels, totalDimes, totalQuarters;
+            int currentNickels, currentDimes, currentQuarters;
             bool changeSelected, waiting;
     };
 }
