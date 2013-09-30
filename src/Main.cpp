@@ -16,10 +16,13 @@ using namespace com_adarwin_simulation;
 using namespace std;
 
 int main() {
-    set<string> test;
-    test.insert("test1");
-    test.insert("test2");
-    SimulationModel* simModel = new CVMSimulationModel(test);
+    set<string> acceptableInputs;
+    acceptableInputs.insert("q");
+    acceptableInputs.insert("d");
+    acceptableInputs.insert("n");
+    acceptableInputs.insert("c");
+    acceptableInputs.insert("w");
+    SimulationModel* simModel = new CVMSimulationModel(acceptableInputs);
     CVMState* simState = new CVMState(0, 0, 0);
     CVMInput* simInput;
     string input = "";
@@ -32,21 +35,5 @@ int main() {
         simModel->delta(simState, simInput);
         cout << simState->getString();
     } while (input != "exit");
-    /*
-    CVMInput* simInput = new CVMInput("quarter, quarter, quarter, "
-                                             "quarter");
-    simModel->lambda(simState);
-    simModel->delta(simState, simInput);
-    simModel->lambda(simState);
-    simInput = new CVMInput("dime, dime, dime");
-    simModel->delta(simState, simInput);
-    simModel->lambda(simState);
-    simInput = new CVMInput("change");
-    simModel->delta(simState, simInput);
-    simModel->lambda(simState);
-    simInput = new CVMInput("wait");
-    simModel->delta(simState, simInput);
-    simModel->lambda(simState);
-    */
     return 0;
 }

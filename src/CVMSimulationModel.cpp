@@ -21,17 +21,28 @@ using std::string;
 using std::vector;
 
 namespace com_adarwin_simulation {
+
+
+
     CVMSimulationModel::CVMSimulationModel(set<string> acceptableInputs) :
                                             SimulationModel(acceptableInputs) {
     }
 
+
+
+
     void CVMSimulationModel::lambda(SimulationState* simulationState) {
         CVMState* state = (CVMState*)simulationState;
-        //cout << "State before lambda:" << endl << state->getString() << endl;
-        //cout << "Lambda executes" << endl << endl;
+        CVMState tempState(state->getCurrentQuarters(),
+                           state->getCurrentDimes(),
+                           state->getCurrentNickels(),
+                           state->getTotalQuarters(),
+                           state->getTotalDimes(),
+                           state->getTotalNickels(),
+                           state->isChangeSelected());
         // Determine whether coffee is due
-        if (numberOfCoffeesToDispense(state) >= 1) {//shouldDispenseCoffee(state)) {
-            int numberOfCoffees = numberOfCoffeesToDispense(state);
+        if (tempState.numberOfCoffeesToDispense() >= 1) {
+            int numberOfCoffees = tempState.numberOfCoffeesToDispense();
             cout << "Have ";
             if (numberOfCoffees == 1) {
                 cout << "a coffee!";
@@ -39,27 +50,58 @@ namespace com_adarwin_simulation {
                 cout << numberOfCoffees << " coffees!";
             }
             cout << endl;
+            tempState.changeStateForDispensedCoffee();
         }
-        if (shouldProvideChange(state)) {
-            int change = centsToDispense(state);
-            double changeInDollars = (double)change/100;
-            cout << "Your change is $" << changeInDollars << endl;
+        if (shouldProvideChange(&tempState)) {
+            int change = state->centsToDispense();
+            if (change != tempState.centsToDispense()) {
+                cout << "Can't produce the necessary change, sorry." << endl;
+            } else {
+                double changeInDollars = (double)change/100;
+                int* changeArray = tempState.changeStateForDispensedChange();
+                //int* changeArray = state->makeChangeFor(state->centsToDispense());
+                if (changeArray != NULL)
+                {
+                    cout << "Your change is $" << changeInDollars
+                         << ", composed of " << changeArray[0];
+                    if (changeArray[0] == 1 )
+                        cout << " quarter, ";
+                    else
+                        cout << " quarters, ";
+                    cout << changeArray[1];
+                    if (changeArray[1] == 1)
+                        cout << " dime, ";
+                    else
+                        cout << " dimes, ";
+                    cout << "and " << changeArray[2];
+                    if (changeArray[2] == 1)
+                        cout << " nickel";
+                    else
+                        cout << " nickels";
+                    cout << endl;
+                } else {
+                    cout << "You don't get any change, sorry" << endl;
+                }
+            }
         }
-        //cout << endl << "State after lambda:" << endl << state->getString() << endl;
     }
+
+
+
 
     void CVMSimulationModel::delta(SimulationState* simulationState,
                                    SimulationInput* simulationInput) {
         CVMState* state = (CVMState*)simulationState;
-        //CVMInput* input = (CVMInput*)simulationInput;
-        //cout << "Input before delta:" << input->getString() << endl;
-        //cout << "Delta executes" << endl << endl;
-        if (numberOfCoffeesToDispense(state) >= 1) {//shouldDispenseCoffee(state)) {
-            changeStateForDispensedCoffee(state);
+        /* Modify the current state so it matches what must have happened
+           during the last call to lambda */
+        if (state->numberOfCoffeesToDispense() >= 1) {
+            state->changeStateForDispensedCoffee();
         }
         if (shouldProvideChange(state)) {
-            changeStateForDispensedChange(state);
+            state->changeStateForDispensedChange();
         }
+
+        // 
         vector<string> inputList = simulationInput->getInputList();
         for (vector<string>::iterator it = inputList.begin();
              it != inputList.end(); it++) {
@@ -78,27 +120,41 @@ namespace com_adarwin_simulation {
         //cout << "State after delta:" << endl << state->getString() << endl;
     }
 
-    int CVMSimulationModel::numberOfCoffeesToDispense(CVMState* state) {
-        int cents = state->getCurrentCents();
-        return cents/100;
-    }
-
     bool CVMSimulationModel::shouldProvideChange(CVMState* cvmState) {
         return cvmState->isChangeSelected();
     }
-    int CVMSimulationModel::centsToDispense(CVMState* state) {
-        return state->getCurrentCents()%100;
-    }
 
     void CVMSimulationModel::changeStateForDispensedCoffee(CVMState* cvmState) {
-        int numberOfCoffees = numberOfCoffeesToDispense(cvmState);
-        if (!cvmState->moveCentsToTotalStorage(numberOfCoffees*100)) {
+        int numberOfCoffees = cvmState->numberOfCoffeesToDispense();
+        // Determine whether change can be provided
+        if (cvmState->canProvideChange()) {
+            cvmState->moveCentsToMainStorage(numberOfCoffees*100);
+        } else {
+            //cout << "Cannot provide change. Screw you and your money" << endl;
+            cvmState->moveCentsToMainStorage(cvmState->getCurrentCents());
+        }
+        /*
+        if (change can be provided) {
+            moveCentsToMainStorage
+        } else {
+            screw you
+        }
+        */
+        /*
+        if (!cvmState->moveCentsToMainStorage(numberOfCoffees*100)) {
             cout << "The cents did not all move properly!!!" << endl;
         }
+        */
     }
     void CVMSimulationModel::changeStateForDispensedChange(CVMState* state) {
-        int change = centsToDispense(state);
-        state->removeCents(change);
+        //int change = state->centsToDispense();
+        int* changeArray = state->makeChangeFor(state->getCurrentCents());
+        //changeArray = state->changeToProvide(changeArray);
+        if (changeArray != NULL) {
+            //state->removeChangeFromTransactionStorage(changeArray);
+        } else {
+            cout << "Cannot provide change. Screw you" << endl;
+        }
         state->setChangeSelected(false);
     }
 }

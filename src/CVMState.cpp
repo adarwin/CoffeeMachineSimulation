@@ -11,32 +11,39 @@
 
 using std::string;
 using std::endl;
+using std::cout;
 using std::stringstream;
 namespace com_adarwin_simulation {
     CVMState::CVMState() {
     }
 
-    CVMState::CVMState(int nickels, int dimes, int quarters) :
-                       totalNickels(nickels), totalDimes(dimes),
-                       totalQuarters(quarters), currentNickels(0),
-                       currentDimes(0), currentQuarters(0),
-                       changeSelected(false) {}
+    CVMState::CVMState(int quarters, int dimes, int nickels) :
+                       currentQuarters(0), currentDimes(0), currentNickels(0),
+                       totalQuarters(quarters), totalDimes(dimes),
+                       totalNickels(nickels), changeSelected(false) {}
 
-    int CVMState::getCurrentNickels() {
-        return currentNickels;
-    }
-    int CVMState::getCurrentDimes() {
-        return currentDimes;
-    }
-    int CVMState::getCurrentQuarters() {
-        return currentQuarters;
-    }
-    bool CVMState::isChangeSelected() {
-        return changeSelected;
-    }
-    bool CVMState::isWaiting() {
-        return waiting;
-    }
+    CVMState::CVMState(int currentQuarters, int currentDimes,
+                       int currentNickels, int totalQuarters, int totalDimes,
+                       int totalNickels, bool changeSelected)
+                       :
+                       currentQuarters(currentQuarters),
+                       currentDimes(currentDimes),
+                       currentNickels(currentNickels),
+                       totalQuarters(totalQuarters),
+                       totalDimes(totalDimes),
+                       totalNickels(totalNickels),
+                       changeSelected(changeSelected) {}
+
+    int CVMState::getCurrentNickels() { return currentNickels; }
+    int CVMState::getCurrentDimes() { return currentDimes; }
+    int CVMState::getCurrentQuarters() { return currentQuarters; }
+    int CVMState::getTotalQuarters() { return totalQuarters; }
+    int CVMState::getTotalDimes() { return totalDimes; }
+    int CVMState::getTotalNickels() { return totalNickels; }
+
+    bool CVMState::isChangeSelected() { return changeSelected; }
+    bool CVMState::isWaiting() { return waiting; }
+
     void CVMState::incrementCurrentNickels() {
         currentNickels++;
     }
@@ -58,32 +65,53 @@ namespace com_adarwin_simulation {
     int CVMState::getCurrentCents() {
         return 5*currentNickels + 10*currentDimes + 25*currentQuarters;
     }
-    bool CVMState::moveCentsToTotalStorage(int cents) {
-        return moveCurrentCents(cents, true);
+    bool CVMState::moveCentsToMainStorage(int cents) {
+        int* changeArray = makeChange(cents, currentQuarters,
+                                      currentDimes, currentNickels);
+        if (changeArray == NULL) {
+            return false;
+        } else {
+            moveChangeToMainStorage(changeArray);
+            return true;
+        }
+    }
+    bool CVMState::moveCentsToTransactionStorage(int cents) {
+        int* changeArray = makeChange(cents, totalQuarters,
+                                      totalDimes, totalNickels);
+        if (changeArray == NULL) {
+            return false;
+        } else {
+            moveChangeToTransactionStorage(changeArray);
+            return true;
+        }
     }
     bool CVMState::removeCents(int cents) {
         return moveCurrentCents(cents, false);
     }
 
     bool CVMState::moveCurrentCents(int cents, bool toMainStorage) {
+        int quartersToMove = 0, dimesToMove = 0, nickelsToMove = 0;
         while (cents >= 25 && currentQuarters > 0) {
             cents -= 25;
             currentQuarters--;
-            if (toMainStorage) totalQuarters++;
+            if (toMainStorage) quartersToMove++;
         }
         while (cents >= 10 && currentDimes > 0) {
             cents -= 10;
             currentDimes--;
-            if (toMainStorage) totalDimes++;
+            if (toMainStorage) dimesToMove++;
         }
         while (cents >= 5 && currentNickels > 0) {
             cents -= 5;
             currentNickels--;
-            if (toMainStorage) totalNickels++;
+            if (toMainStorage) nickelsToMove++;
         }
         if (cents > 0) {
             return false;
         } else {
+            totalQuarters += quartersToMove;
+            totalDimes += dimesToMove;
+            totalNickels += nickelsToMove;
             return true;
         }
     }
@@ -176,5 +204,124 @@ namespace com_adarwin_simulation {
         ss << "|                     |                     |" << endl;
         ss << " ------------------------------------------- " << endl;
         return ss.str();
+    }
+    int* CVMState::makeChange(int changeCents, int quartersAvailable,
+                              int dimesAvailable, int nickelsAvailable) {
+        int* changeArray;
+        int quartersToOutput = 0, dimesToOutput = 0, nickelsToOutput = 0;
+
+        while (changeCents >= 25 && quartersAvailable > 0) {
+            changeCents -= 25;
+            quartersAvailable--;
+            quartersToOutput++;
+        }
+        while (changeCents >= 10 && dimesAvailable > 0) {
+            changeCents -= 10;
+            dimesAvailable--;
+            dimesToOutput++;
+        }
+        while (changeCents >= 5 && nickelsAvailable > 0) {
+            changeCents -= 5;
+            nickelsAvailable--;
+            nickelsToOutput++;
+        }
+        if (changeCents > 0) {
+            changeArray = NULL;
+        } else {
+            changeArray = new int[3];
+            changeArray[0] = quartersToOutput;
+            changeArray[1] = dimesToOutput;
+            changeArray[2] = nickelsToOutput;
+        }
+        return changeArray;
+    }
+
+
+    int* CVMState::makeChangeFor(int changeCents) {
+        return makeChange(changeCents, currentQuarters,
+                          currentDimes, currentNickels);
+    }
+
+
+
+    int* CVMState::changeToProvide() {
+        return makeChangeFor(centsToDispense());
+    }
+
+
+
+    bool CVMState::canProvideChange() {
+        return changeToProvide() != NULL;
+    }
+
+
+    void CVMState::removeChangeFromTransactionStorage(int* changeArray) {
+        currentQuarters -= changeArray[0];
+        currentDimes -= changeArray[1];
+        currentNickels -= changeArray[2];
+    }
+    void CVMState::addChangeToTransactionStorage(int* changeArray) {
+        currentQuarters += changeArray[0];
+        currentDimes += changeArray[1];
+        currentNickels += changeArray[2];
+    }
+    void CVMState::removeChangeFromMainStorage(int* changeArray) {
+        totalQuarters -= changeArray[0];
+        totalDimes -= changeArray[1];
+        totalNickels -= changeArray[2];
+    }
+    void CVMState::addChangeToMainStorage(int* changeArray) {
+        totalQuarters += changeArray[0];
+        totalDimes += changeArray[1];
+        totalNickels += changeArray[2];
+    }
+    void CVMState::moveChangeToTransactionStorage(int* changeArray) {
+        removeChangeFromMainStorage(changeArray);
+        addChangeToTransactionStorage(changeArray);
+    }
+    void CVMState::moveChangeToMainStorage(int* changeArray) {
+        removeChangeFromTransactionStorage(changeArray);
+        addChangeToMainStorage(changeArray);
+    }
+    int CVMState::numberOfCoffeesToDispense() {
+        return getCurrentCents() / 100;
+    }
+    int CVMState::centsToDispense() {
+        return getCurrentCents()%100;
+    }
+
+
+
+
+    void CVMState::changeStateForDispensedCoffee() {
+        // Move all coffee money to main storage
+        int numberOfCoffees = numberOfCoffeesToDispense();
+        int* changeArray = makeChangeFor(numberOfCoffees*100);
+        if (changeArray != NULL) {
+            moveChangeToMainStorage(changeArray);
+        } else {
+            int currentExcessCents = centsToDispense();
+            // Move all current moneys to main storage
+            moveCentsToMainStorage(getCurrentCents());
+            // Try to get some back from main storage
+            moveCentsToTransactionStorage(currentExcessCents);
+        }
+        /*
+        if (canProvideChange()) {
+            moveCentsToMainStorage(numberOfCoffees*100);
+        } else {
+            moveCentsToMainStorage(getCurrentCents());
+        }
+        */
+    }
+    
+
+    int* CVMState::changeStateForDispensedChange() {
+        int* changeArray = makeChangeFor(getCurrentCents()%100);
+        if (changeArray != NULL) {
+            removeChangeFromTransactionStorage(changeArray);
+        }
+        setChangeSelected(false);
+        return changeArray;
     }
 }

@@ -19,9 +19,7 @@ namespace com_adarwin_simulation {
         protected:
             std::set<std::string> acceptableInputs;
         private:
-            int numberOfCoffeesToDispense(CVMState*);
             bool shouldProvideChange(CVMState*);
-            int centsToDispense(CVMState*);
             void changeStateForDispensedCoffee(CVMState*);
             void changeStateForDispensedChange(CVMState*);
     };
