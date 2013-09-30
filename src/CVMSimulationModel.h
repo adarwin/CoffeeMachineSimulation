@@ -20,8 +20,6 @@ namespace com_adarwin_simulation {
             std::set<std::string> acceptableInputs;
         private:
             bool shouldProvideChange(CVMState*);
-            void changeStateForDispensedCoffee(CVMState*);
-            void changeStateForDispensedChange(CVMState*);
     };
 }
 #endif

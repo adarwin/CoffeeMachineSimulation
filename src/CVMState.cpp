@@ -13,6 +13,7 @@ using std::string;
 using std::endl;
 using std::cout;
 using std::stringstream;
+
 namespace com_adarwin_simulation {
     CVMState::CVMState() {
     }
@@ -42,7 +43,6 @@ namespace com_adarwin_simulation {
     int CVMState::getTotalNickels() { return totalNickels; }
 
     bool CVMState::isChangeSelected() { return changeSelected; }
-    bool CVMState::isWaiting() { return waiting; }
 
     void CVMState::incrementCurrentNickels() {
         currentNickels++;
@@ -66,22 +66,28 @@ namespace com_adarwin_simulation {
         return 5*currentNickels + 10*currentDimes + 25*currentQuarters;
     }
     bool CVMState::moveCentsToMainStorage(int cents) {
-        int* changeArray = makeChange(cents, currentQuarters,
-                                      currentDimes, currentNickels);
+        int* changeArray = new int[3];
+        changeArray = makeChange(cents, currentQuarters,
+                                 currentDimes, currentNickels, changeArray);
         if (changeArray == NULL) {
+            delete changeArray;
             return false;
         } else {
             moveChangeToMainStorage(changeArray);
+            delete changeArray;
             return true;
         }
     }
     bool CVMState::moveCentsToTransactionStorage(int cents) {
-        int* changeArray = makeChange(cents, totalQuarters,
-                                      totalDimes, totalNickels);
+        int* changeArray = new int[3];
+        changeArray = makeChange(cents, totalQuarters,
+                                 totalDimes, totalNickels, changeArray);
         if (changeArray == NULL) {
+            delete changeArray;
             return false;
         } else {
             moveChangeToTransactionStorage(changeArray);
+            delete changeArray;
             return true;
         }
     }
@@ -206,8 +212,9 @@ namespace com_adarwin_simulation {
         return ss.str();
     }
     int* CVMState::makeChange(int changeCents, int quartersAvailable,
-                              int dimesAvailable, int nickelsAvailable) {
-        int* changeArray;
+                              int dimesAvailable, int nickelsAvailable,
+                              int* changeArray) {
+        //int* changeArray;
         int quartersToOutput = 0, dimesToOutput = 0, nickelsToOutput = 0;
 
         while (changeCents >= 25 && quartersAvailable > 0) {
@@ -228,7 +235,7 @@ namespace com_adarwin_simulation {
         if (changeCents > 0) {
             changeArray = NULL;
         } else {
-            changeArray = new int[3];
+            //changeArray = new int[3];
             changeArray[0] = quartersToOutput;
             changeArray[1] = dimesToOutput;
             changeArray[2] = nickelsToOutput;
@@ -237,21 +244,26 @@ namespace com_adarwin_simulation {
     }
 
 
-    int* CVMState::makeChangeFor(int changeCents) {
-        return makeChange(changeCents, currentQuarters,
-                          currentDimes, currentNickels);
+    int* CVMState::makeChangeFor(int changeCents, int* changeArray) {
+        changeArray = makeChange(changeCents, currentQuarters,
+                                 currentDimes, currentNickels, changeArray);
+        return changeArray;
     }
 
 
 
-    int* CVMState::changeToProvide() {
-        return makeChangeFor(centsToDispense());
+    int* CVMState::changeToProvide(int* changeArray) {
+        return makeChangeFor(centsToDispense(), changeArray);
     }
 
 
 
     bool CVMState::canProvideChange() {
-        return changeToProvide() != NULL;
+        int* changeArray = new int[3];
+        changeArray = changeToProvide(changeArray);
+        bool output = changeArray != NULL;
+        delete changeArray;
+        return output;
     }
 
 
@@ -260,32 +272,49 @@ namespace com_adarwin_simulation {
         currentDimes -= changeArray[1];
         currentNickels -= changeArray[2];
     }
+
+
     void CVMState::addChangeToTransactionStorage(int* changeArray) {
         currentQuarters += changeArray[0];
         currentDimes += changeArray[1];
         currentNickels += changeArray[2];
     }
+
+
+
     void CVMState::removeChangeFromMainStorage(int* changeArray) {
         totalQuarters -= changeArray[0];
         totalDimes -= changeArray[1];
         totalNickels -= changeArray[2];
     }
+
+
+
     void CVMState::addChangeToMainStorage(int* changeArray) {
         totalQuarters += changeArray[0];
         totalDimes += changeArray[1];
         totalNickels += changeArray[2];
     }
+
+
+
     void CVMState::moveChangeToTransactionStorage(int* changeArray) {
         removeChangeFromMainStorage(changeArray);
         addChangeToTransactionStorage(changeArray);
     }
+
+
     void CVMState::moveChangeToMainStorage(int* changeArray) {
         removeChangeFromTransactionStorage(changeArray);
         addChangeToMainStorage(changeArray);
     }
+
+
     int CVMState::numberOfCoffeesToDispense() {
         return getCurrentCents() / 100;
     }
+
+
     int CVMState::centsToDispense() {
         return getCurrentCents()%100;
     }
@@ -296,7 +325,8 @@ namespace com_adarwin_simulation {
     void CVMState::changeStateForDispensedCoffee() {
         // Move all coffee money to main storage
         int numberOfCoffees = numberOfCoffeesToDispense();
-        int* changeArray = makeChangeFor(numberOfCoffees*100);
+        int* changeArray = new int[3];
+        changeArray = makeChangeFor(numberOfCoffees*100, changeArray);
         if (changeArray != NULL) {
             moveChangeToMainStorage(changeArray);
         } else {
@@ -306,6 +336,7 @@ namespace com_adarwin_simulation {
             // Try to get some back from main storage
             moveCentsToTransactionStorage(currentExcessCents);
         }
+        delete changeArray;
         /*
         if (canProvideChange()) {
             moveCentsToMainStorage(numberOfCoffees*100);
@@ -316,8 +347,8 @@ namespace com_adarwin_simulation {
     }
     
 
-    int* CVMState::changeStateForDispensedChange() {
-        int* changeArray = makeChangeFor(getCurrentCents()%100);
+    int* CVMState::changeStateForDispensedChange(int* changeArray) {
+        changeArray = makeChangeFor(getCurrentCents()%100, changeArray);
         if (changeArray != NULL) {
             removeChangeFromTransactionStorage(changeArray);
         }

@@ -24,7 +24,6 @@ namespace com_adarwin_simulation {
             int getTotalDimes();
             int getTotalNickels();
             bool isChangeSelected();
-            bool isWaiting();
             void incrementCurrentNickels();
             void incrementCurrentDimes();
             void incrementCurrentQuarters();
@@ -38,15 +37,16 @@ namespace com_adarwin_simulation {
             bool removeCents(int);
             std::string getString();
             bool canProvideChange();
-            int* changeToProvide();
-            int* makeChange(int changeCents, int quartersAvailable,
-                            int dimesAvailable, int nickelsAvailable);
-            int* makeChangeFor(int);
+            int* changeToProvide(int* changeArray);
+            int* makeChangeFor(int changeCents, int* changeArray);
             int numberOfCoffeesToDispense();
             int centsToDispense();
             void changeStateForDispensedCoffee();
-            int* changeStateForDispensedChange();
+            int* changeStateForDispensedChange(int* changeArray);
         private:
+            int* makeChange(int changeCents, int quartersAvailable,
+                            int dimesAvailable, int nickelsAvailable,
+                            int* changeAvailable);
             void removeChangeFromTransactionStorage(int*);
             void addChangeToTransactionStorage(int*);
             void removeChangeFromMainStorage(int*);

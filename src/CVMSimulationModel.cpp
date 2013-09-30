@@ -58,8 +58,8 @@ namespace com_adarwin_simulation {
                 cout << "Can't produce the necessary change, sorry." << endl;
             } else {
                 double changeInDollars = (double)change/100;
-                int* changeArray = tempState.changeStateForDispensedChange();
-                //int* changeArray = state->makeChangeFor(state->centsToDispense());
+                int* changeArray = new int[3];
+                changeArray = tempState.changeStateForDispensedChange(changeArray);
                 if (changeArray != NULL)
                 {
                     cout << "Your change is $" << changeInDollars
@@ -82,6 +82,7 @@ namespace com_adarwin_simulation {
                 } else {
                     cout << "You don't get any change, sorry" << endl;
                 }
+                delete changeArray;
             }
         }
     }
@@ -98,10 +99,12 @@ namespace com_adarwin_simulation {
             state->changeStateForDispensedCoffee();
         }
         if (shouldProvideChange(state)) {
-            state->changeStateForDispensedChange();
+            int* changeArray = new int[3];
+            state->changeStateForDispensedChange(changeArray);
+            delete changeArray;
         }
 
-        // 
+        // Modify the current state in accordance with the input
         vector<string> inputList = simulationInput->getInputList();
         for (vector<string>::iterator it = inputList.begin();
              it != inputList.end(); it++) {
@@ -117,44 +120,10 @@ namespace com_adarwin_simulation {
                 state->setWaiting(true);
             }
         }
-        //cout << "State after delta:" << endl << state->getString() << endl;
     }
 
     bool CVMSimulationModel::shouldProvideChange(CVMState* cvmState) {
         return cvmState->isChangeSelected();
     }
 
-    void CVMSimulationModel::changeStateForDispensedCoffee(CVMState* cvmState) {
-        int numberOfCoffees = cvmState->numberOfCoffeesToDispense();
-        // Determine whether change can be provided
-        if (cvmState->canProvideChange()) {
-            cvmState->moveCentsToMainStorage(numberOfCoffees*100);
-        } else {
-            //cout << "Cannot provide change. Screw you and your money" << endl;
-            cvmState->moveCentsToMainStorage(cvmState->getCurrentCents());
-        }
-        /*
-        if (change can be provided) {
-            moveCentsToMainStorage
-        } else {
-            screw you
-        }
-        */
-        /*
-        if (!cvmState->moveCentsToMainStorage(numberOfCoffees*100)) {
-            cout << "The cents did not all move properly!!!" << endl;
-        }
-        */
-    }
-    void CVMSimulationModel::changeStateForDispensedChange(CVMState* state) {
-        //int change = state->centsToDispense();
-        int* changeArray = state->makeChangeFor(state->getCurrentCents());
-        //changeArray = state->changeToProvide(changeArray);
-        if (changeArray != NULL) {
-            //state->removeChangeFromTransactionStorage(changeArray);
-        } else {
-            cout << "Cannot provide change. Screw you" << endl;
-        }
-        state->setChangeSelected(false);
-    }
 }
